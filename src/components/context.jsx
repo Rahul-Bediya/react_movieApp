@@ -1,0 +1,72 @@
+import React ,{useContext ,useEffect, useState } from "react";
+
+export const API_URL= `https://www.omdbapi.com/?apikey=${import.meta.env.VITE_API_KEY}`;
+
+const AppContext=React.createContext();
+
+//we need to  create a Appprovider and we are getting the children and that is app component in our case
+
+const AppProvider = ({children}) =>{
+
+    const[isLoding, setIsLoading]=useState(true);
+    const[movie, setMovie]=useState([]);
+    const[isError, setIsError]=useState({ show: "false", msg: ""});
+    const[query, setQuery]=useState("titanic");
+
+
+    const getMovies= async (url)=> {
+        setIsLoading(true);
+        try{
+            const res=await fetch(url);
+            const data=await res.json();
+            console.log(data);
+            if(data.Response==="True"){
+                setIsLoading(false);
+
+                setIsError({
+                    show: false,
+                    msg: " ",
+                }); 
+                setMovie(data.Search); 
+            }
+            else{
+                setIsError({
+                    show: true,
+                    msg: data.Error,
+                }); 
+
+            }     
+        }
+        catch(error){
+            console.log(error);
+        }
+    };
+
+
+
+    useEffect(()=>{
+        // use debouncing
+        let timerOut= setTimeout(()=>{
+            getMovies(`${API_URL}&s=${query}`);
+
+        },500);
+// we are using cleartimout for clear previous data
+        return ()=>clearTimeout(timerOut);
+       
+    },[query]);
+
+    return (
+        <AppContext.Provider value={{isLoding, isError, movie,query, setQuery}} >{children}</AppContext.Provider>
+    );
+
+
+}; 
+
+//global custom hooks
+
+const useGlobalContext = ()=>{
+    return useContext(AppContext);
+
+};   
+
+export {AppContext, AppProvider , useGlobalContext  };
